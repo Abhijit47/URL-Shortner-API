@@ -1,25 +1,30 @@
 const nodeUrl = require('url');
-const nanoId = require("nanoid");
-const URL = require("./../models/urlModel");
+const nanoId = require('nanoid');
+const URL = require('./../models/urlModel');
 
 exports.createShortURL = async (req, res, next) => {
   try {
     const { originalUrl } = req.body;
     const urlID = nanoId.nanoid();
-    const baseURL = process.env.BASE;
+    const baseURL = process.env.CLOUD_BASE_URL;
 
     // url validation
     // parse the url and check protocol
     const isValidURL = nodeUrl.parse(originalUrl);
 
     if (isValidURL.protocol !== 'https:' && isValidURL.protocol !== 'http:') {
-      return res.status(400).json({ message: "URL is not valid!!!.Try with valid URL" });
+      return res
+        .status(400)
+        .json({ message: 'URL is not valid!!!.Try with valid URL' });
     }
 
     // check url is exist or not
     const url = await URL.findOne({ originalUrl });
     if (url) {
-      return res.status(400).json({ message: "URL is Already Shortend!!!.", ShortenURL: url.shortenUrl });
+      return res.status(400).json({
+        message: 'URL is Already Shortend!!!.',
+        ShortenURL: url.shortenUrl,
+      });
     }
 
     // create a shorten url with combine of base URL and nanoid
@@ -30,18 +35,19 @@ exports.createShortURL = async (req, res, next) => {
       originalUrl,
       shortenUrl,
       urlID,
-      date: new Date()
+      date: new Date(),
     });
 
     // save this document
     const saveURL = await newURL.save();
 
     // return a response to the user
-    res.status(200).json({ message: "success", URL: saveURL.shortenUrl });
-
-
+    res.status(200).json({ message: 'success', URL: saveURL.shortenUrl });
   } catch (err) {
-    return res.status(400).json({ message: "Something went wrong shortning URL.", error: err.message });
+    return res.status(400).json({
+      message: 'Something went wrong shortning URL.',
+      error: err.message,
+    });
   }
 };
 
@@ -53,7 +59,7 @@ exports.getShortURL = async (req, res, next) => {
     // find the document associated with this id
     const existingURL = await URL.findOne({ urlID: urlId });
     if (!existingURL) {
-      return res.status(400).json({ message: "Provided id not matched!!!" });
+      return res.status(400).json({ message: 'Provided id not matched!!!' });
     }
 
     // if exist the url
@@ -65,8 +71,10 @@ exports.getShortURL = async (req, res, next) => {
     );
 
     res.status(200).redirect(existingURL.originalUrl);
-
   } catch (err) {
-    return res.status(400).json({ message: "Something went wrong getting URL.", error: err.message });
+    return res.status(400).json({
+      message: 'Something went wrong getting URL.',
+      error: err.message,
+    });
   }
 };
